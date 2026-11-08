@@ -19,28 +19,28 @@ export const TutorialScreen: React.FC<TutorialScreenProps> = ({
       subtitle: 'પ્રહર • Jain Panchang Tracker',
       description:
         'A mobile-first Jain Daily Pachakkhan & Tithi Tracker featuring precise NOAA astronomical solar calculations, sacred Parva tithi observances, and trilingual sutras with serene audio recitations.',
-      icon: <Sparkles size={36} className="text-amber-400" />
+      icon: <Sparkles size={36} className="text-white" />
     },
     {
       title: 'Astronomical Solar Timings',
       subtitle: 'Navkarsi, Porsi, Purimaddh & Chauvihar',
       description:
         'Computes exact Sunrise, Sunset, and day divisions: Navkarsi (Sunrise + 48 min / 2 Ghadis), Porsi (1/4th daylight), Sadh-Porsi (3/8th), Purimaddh (midday), Avaddh, and Chauvihar for any city or GPS coordinates.',
-      icon: <Sun size={36} className="text-amber-400" />
+      icon: <Sun size={36} className="text-white" />
     },
     {
       title: 'Jain Tithi & Parva Observances',
       subtitle: 'Sud & Vad Lunar Cycles',
       description:
         'Full calendar calibrated to traditional Jain Panchang. Automatic badges and dietary guidelines for sacred Parva days (Chaudas, Atham, Poonam, Amas, Pancham, Bij) to help maintain Leelo-tri and fasting disciplines.',
-      icon: <Calendar size={36} className="text-emerald-400" />
+      icon: <Calendar size={36} className="text-white" />
     },
     {
       title: 'Install on iPhone Without App Store',
       subtitle: 'Native Home Screen Standalone App',
       description:
         'Simply tap the Share button in Safari, then tap "Add to Home Screen". Prahara installs directly onto your iPhone with full offline support, custom app icon, and zero App Store friction!',
-      icon: <Smartphone size={36} className="text-sky-400" />
+      icon: <Smartphone size={36} className="text-white" />
     }
   ];
 

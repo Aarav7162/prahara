@@ -36,12 +36,8 @@ export const IOSFloatingBottomBar: React.FC<IOSFloatingBottomBarProps> = ({
               onClick={() => onTabChange(tab.id)}
               className={`flex flex-col items-center justify-center py-1.5 px-5 rounded-[22px] transition-all duration-200 active:scale-90 ${
                 isSelected
-                  ? isDark
-                    ? 'bg-white/10 text-white'
-                    : 'bg-slate-900/10 text-slate-900'
-                  : isDark
-                  ? 'text-slate-400 hover:text-slate-200'
-                  : 'text-slate-500 hover:text-slate-800'
+                  ? 'bg-white text-black font-bold shadow-sm'
+                  : 'text-slate-400 hover:text-white'
               }`}
             >
               <div className={`${isSelected ? 'scale-105' : 'scale-100'} transition-transform`}>

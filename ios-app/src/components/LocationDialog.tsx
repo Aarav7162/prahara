@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { Navigation, Check, X } from 'lucide-react';
+import { Navigation, Check, X, Loader2 } from 'lucide-react';
 import { CityLocation } from '../types';
-import { predefinedCities, findNearestCity } from '../constants/locations';
+import { predefinedCities } from '../constants/locations';
+import { LocationEngine } from '../engine/LocationEngine';
 
 interface LocationDialogProps {
   currentLocation: CityLocation;
@@ -19,57 +20,36 @@ export const LocationDialog: React.FC<LocationDialogProps> = ({
   isDark = true
 }) => {
   const [isLocating, setIsLocating] = useState(false);
-  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [statusMsg, setStatusMsg] = useState<string | null>(null);
 
   if (!isOpen) return null;
 
-  const handleGpsDetect = () => {
-    if (!navigator.geolocation) {
-      setErrorMsg('Geolocation is not supported by your browser.');
-      return;
-    }
-
+  const handleAutoDetect = async () => {
     setIsLocating(true);
-    setErrorMsg(null);
+    setStatusMsg('Detecting location (GPS / Network)...');
 
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
+    try {
+      const detected = await LocationEngine.detectLocation();
+      setStatusMsg(`Detected: ${detected.name} (${detected.latitude.toFixed(2)}°, ${detected.longitude.toFixed(2)}°)`);
+      setTimeout(() => {
+        onSelectLocation(detected);
         setIsLocating(false);
-        const { latitude, longitude } = pos.coords;
-        const nearest = findNearestCity(latitude, longitude);
-        onSelectLocation({
-          ...nearest,
-          latitude,
-          longitude,
-          isGps: true,
-          isAutoDetected: true
-        });
         onClose();
-      },
-      (err) => {
-        setIsLocating(false);
-        setErrorMsg('Unable to retrieve your location. Please select a city manually.');
-      },
-      { timeout: 10000, enableHighAccuracy: true }
-    );
+      }, 700);
+    } catch (err: any) {
+      setIsLocating(false);
+      setStatusMsg(err.message || 'Location unavailable. Please select your city below.');
+    }
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in">
-      <div
-        className={`w-full max-w-sm rounded-[28px] p-5 border shadow-2xl transition-all ${
-          isDark
-            ? 'bg-[#161B26] border-white/15 text-slate-100'
-            : 'bg-white border-slate-200 text-slate-900'
-        }`}
-      >
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-md animate-in fade-in">
+      <div className="w-full max-w-sm rounded-[32px] p-5 border border-white/20 bg-black text-white shadow-2xl transition-all">
         <div className="flex items-center justify-between pb-3 border-b border-white/10">
-          <h2 className="text-[17px] font-bold">Location & Solar Position</h2>
+          <h2 className="text-[17px] font-bold text-white tracking-tight">Location & Solar Position</h2>
           <button
             onClick={onClose}
-            className={`p-1.5 rounded-full ${
-              isDark ? 'hover:bg-white/10 text-slate-400' : 'hover:bg-slate-100 text-slate-600'
-            }`}
+            className="p-1.5 rounded-full hover:bg-white/10 text-slate-400 hover:text-white transition-colors"
           >
             <X size={18} />
           </button>
@@ -78,27 +58,29 @@ export const LocationDialog: React.FC<LocationDialogProps> = ({
         <div className="py-3">
           {/* Auto-detect button */}
           <button
-            onClick={handleGpsDetect}
+            onClick={handleAutoDetect}
             disabled={isLocating}
-            className={`w-full flex items-center justify-center gap-2 py-3 px-4 rounded-[16px] font-semibold text-sm transition-all active:scale-[0.98] ${
-              isDark
-                ? 'bg-[#222938] hover:bg-[#2A3448] text-white border border-white/10'
-                : 'bg-[#E8ECF2] hover:bg-[#DEE3EB] text-slate-900 border border-slate-300'
-            }`}
+            className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-[18px] font-bold text-xs bg-white text-black hover:bg-slate-200 transition-all active:scale-[0.98] shadow-md"
           >
-            <Navigation size={16} className={isLocating ? 'animate-spin' : ''} />
-            <span>{isLocating ? 'Detecting GPS...' : 'Auto-Detect Device GPS Location'}</span>
+            {isLocating ? (
+              <Loader2 size={16} className="animate-spin text-black" />
+            ) : (
+              <Navigation size={16} className="text-black" />
+            )}
+            <span>{isLocating ? 'Detecting Location...' : 'Auto-Detect Device Location'}</span>
           </button>
 
-          {errorMsg && (
-            <p className="text-xs text-rose-400 mt-2 text-center">{errorMsg}</p>
+          {statusMsg && (
+            <p className="text-xs text-slate-300 mt-2 text-center font-medium bg-white/5 py-1 px-2 rounded-lg border border-white/10">
+              {statusMsg}
+            </p>
           )}
 
-          <div className="text-[11.5px] font-semibold text-slate-400 mt-4 mb-2 uppercase tracking-wider">
-            Or choose major Jain center:
+          <div className="text-[11px] font-bold text-slate-400 mt-4 mb-2 uppercase tracking-wider">
+            Or select major Jain center:
           </div>
 
-          <div className="max-h-[260px] overflow-y-auto space-y-1 pr-1 no-scrollbar">
+          <div className="max-h-[260px] overflow-y-auto space-y-1.5 pr-1 no-scrollbar">
             {predefinedCities.map((city) => {
               const isSelected = currentLocation.name === city.name && !currentLocation.isAutoDetected;
               return (
@@ -108,33 +90,29 @@ export const LocationDialog: React.FC<LocationDialogProps> = ({
                     onSelectLocation({ ...city, isGps: false, isAutoDetected: false });
                     onClose();
                   }}
-                  className={`flex items-center justify-between px-3.5 py-2.5 rounded-[12px] cursor-pointer transition-colors ${
+                  className={`flex items-center justify-between px-3.5 py-2.5 rounded-[14px] cursor-pointer transition-colors border ${
                     isSelected
-                      ? isDark
-                        ? 'bg-[#2A3448] text-white font-bold'
-                        : 'bg-[#E8ECF2] text-slate-900 font-bold'
-                      : isDark
-                      ? 'hover:bg-white/5 text-slate-200'
-                      : 'hover:bg-slate-50 text-slate-800'
+                      ? 'bg-white text-black font-extrabold border-white shadow-sm'
+                      : 'bg-white/5 hover:bg-white/10 border-white/5 text-slate-200'
                   }`}
                 >
                   <div>
-                    <div className="text-sm font-semibold">{city.name}</div>
-                    <div className="text-[11px] text-slate-400">{city.stateOrCountry}</div>
+                    <div className="text-sm font-bold">{city.name}</div>
+                    <div className={`text-[11px] ${isSelected ? 'text-black/70' : 'text-slate-400'}`}>
+                      {city.stateOrCountry}
+                    </div>
                   </div>
-                  {isSelected && <Check size={17} className={isDark ? 'text-white' : 'text-slate-900'} />}
+                  {isSelected && <Check size={17} className="text-black" />}
                 </div>
               );
             })}
           </div>
         </div>
 
-        <div className="pt-2 text-right">
+        <div className="pt-2 text-right border-t border-white/10">
           <button
             onClick={onClose}
-            className={`px-4 py-2 text-sm font-bold ${
-              isDark ? 'text-slate-300 hover:text-white' : 'text-slate-700 hover:text-slate-950'
-            }`}
+            className="px-4 py-2 text-xs font-bold text-slate-300 hover:text-white"
           >
             Close
           </button>
@@ -143,4 +121,3 @@ export const LocationDialog: React.FC<LocationDialogProps> = ({
     </div>
   );
 };
-

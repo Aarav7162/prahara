@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Sun, Sunset, Sparkles, AlertCircle } from 'lucide-react';
+import { ChevronLeft, ChevronRight, AlertCircle } from 'lucide-react';
 import { CityLocation, TithiInfo, SolarTimes } from '../types';
 import { JainTithiEngine } from '../engine/JainTithiEngine';
 import { SolarAstronomyEngine } from '../engine/SolarAstronomyEngine';
@@ -9,11 +9,13 @@ import { ParvaBadge } from '../components/ParvaBadge';
 interface CalendarScreenProps {
   currentLocation: CityLocation;
   isDark?: boolean;
+  onSelectDateCell?: (date: Date, tithi: TithiInfo, solar: SolarTimes) => void;
 }
 
 export const CalendarScreen: React.FC<CalendarScreenProps> = ({
   currentLocation,
-  isDark = true
+  isDark = true,
+  onSelectDateCell
 }) => {
   const today = new Date();
   const [currentYear, setCurrentYear] = useState(today.getFullYear());
@@ -42,6 +44,13 @@ export const CalendarScreen: React.FC<CalendarScreenProps> = ({
     setCurrentYear(today.getFullYear());
     setCurrentMonth(today.getMonth());
     setSelectedDate(today);
+    const tithi = JainTithiEngine.calculateTithi(today);
+    const solar = SolarAstronomyEngine.calculateSolarTimes(
+      today,
+      currentLocation.latitude,
+      currentLocation.longitude
+    );
+    if (onSelectDateCell) onSelectDateCell(today, tithi, solar);
   };
 
   const monthNames = [
@@ -70,12 +79,26 @@ export const CalendarScreen: React.FC<CalendarScreenProps> = ({
     return `${hours}:${mins}`;
   };
 
+  const handleCellClick = (date: Date) => {
+    setSelectedDate(date);
+    const tithi = JainTithiEngine.calculateTithi(date);
+    const solar = SolarAstronomyEngine.calculateSolarTimes(
+      date,
+      currentLocation.latitude,
+      currentLocation.longitude
+    );
+    // Expand from Notch / Dynamic Island!
+    if (onSelectDateCell) {
+      onSelectDateCell(date, tithi, solar);
+    }
+  };
+
   return (
     <div className="w-full flex flex-col space-y-3.5 pb-24 animate-in fade-in">
       {/* Header */}
       <div className="flex items-center justify-between px-1">
         <div>
-          <h2 className="text-xl font-bold tracking-tight">Jain Tithi Calendar</h2>
+          <h2 className="text-xl font-bold tracking-tight text-white">Jain Tithi Calendar</h2>
           <p className="text-xs text-slate-400 font-semibold">
             {monthNames[currentMonth]} {currentYear}
           </p>
@@ -84,31 +107,21 @@ export const CalendarScreen: React.FC<CalendarScreenProps> = ({
         <div className="flex items-center gap-1.5">
           <button
             onClick={jumpToToday}
-            className={`px-3 py-1 text-xs font-semibold rounded-full border transition-all active:scale-95 ${
-              isDark
-                ? 'bg-white/10 border-white/10 text-white hover:bg-white/15'
-                : 'bg-black/5 border-black/10 text-slate-900 hover:bg-black/10'
-            }`}
+            className="px-3 py-1 text-xs font-semibold rounded-full border border-white/15 bg-white/10 text-white hover:bg-white/20 transition-all active:scale-95"
           >
             Today
           </button>
           <button
             onClick={prevMonth}
-            className={`p-1.5 rounded-full border transition-all active:scale-95 ${
-              isDark
-                ? 'bg-white/10 border-white/10 text-slate-200 hover:bg-white/15'
-                : 'bg-black/5 border-black/10 text-slate-800 hover:bg-black/10'
-            }`}
+            className="p-1.5 rounded-full border border-white/15 bg-white/10 text-white hover:bg-white/20 transition-all active:scale-95"
+            aria-label="Previous Month"
           >
             <ChevronLeft size={16} />
           </button>
           <button
             onClick={nextMonth}
-            className={`p-1.5 rounded-full border transition-all active:scale-95 ${
-              isDark
-                ? 'bg-white/10 border-white/10 text-slate-200 hover:bg-white/15'
-                : 'bg-black/5 border-black/10 text-slate-800 hover:bg-black/10'
-            }`}
+            className="p-1.5 rounded-full border border-white/15 bg-white/10 text-white hover:bg-white/20 transition-all active:scale-95"
+            aria-label="Next Month"
           >
             <ChevronRight size={16} />
           </button>
@@ -122,9 +135,7 @@ export const CalendarScreen: React.FC<CalendarScreenProps> = ({
           {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, idx) => (
             <div
               key={idx}
-              className={`text-[11px] font-bold ${
-                idx === 0 || idx === 6 ? 'text-slate-400' : 'text-slate-500'
-              }`}
+              className="text-[11px] font-bold text-slate-400"
             >
               {day}
             </div>
@@ -156,39 +167,29 @@ export const CalendarScreen: React.FC<CalendarScreenProps> = ({
             return (
               <div
                 key={dayNum}
-                onClick={() => setSelectedDate(date)}
+                onClick={() => handleCellClick(date)}
                 className={`relative h-13 rounded-[14px] p-1 flex flex-col items-center justify-between cursor-pointer transition-all border ${
                   isSelected
-                    ? isDark
-                      ? 'bg-white/20 border-white text-white font-bold shadow-md scale-102'
-                      : 'bg-slate-900/10 border-slate-900 text-slate-950 font-bold shadow-md scale-102'
+                    ? 'bg-white text-black font-extrabold shadow-lg scale-102 border-white'
                     : isToday
-                    ? isDark
-                      ? 'bg-white/10 border-white/30 text-white font-semibold'
-                      : 'bg-slate-100 border-slate-300 text-slate-900 font-semibold'
-                    : isDark
-                    ? 'hover:bg-white/5 border-transparent text-slate-200'
-                    : 'hover:bg-slate-50 border-transparent text-slate-800'
+                    ? 'bg-white/15 border-white/30 text-white font-semibold'
+                    : 'hover:bg-white/10 border-transparent text-slate-200'
                 }`}
               >
                 {/* Gregorian Day Number */}
                 <span className="text-[12.5px] leading-tight">{dayNum}</span>
 
                 {/* Tithi short abbreviation */}
-                <span className="text-[9.5px] text-slate-400 truncate max-w-full font-medium">
+                <span className={`text-[9.5px] truncate max-w-full font-medium ${isSelected ? 'text-black' : 'text-slate-400'}`}>
                   {tithi.shortName}
                 </span>
 
-                {/* Parva Indicator Dot */}
+                {/* Parva Indicator Dot (Pure Stark Monochrome) */}
                 <div className="h-1.5 flex items-center justify-center">
                   {tithi.isParva && (
                     <span
                       className={`w-1.5 h-1.5 rounded-full ${
-                        tithi.parvaType === 'CHAUDAS' || tithi.parvaType === 'ATHAM'
-                          ? 'bg-emerald-400'
-                          : tithi.parvaType === 'POONAM' || tithi.parvaType === 'AMAS'
-                          ? 'bg-amber-400'
-                          : 'bg-slate-400'
+                        isSelected ? 'bg-black' : 'bg-white'
                       }`}
                     />
                   )}
@@ -203,7 +204,7 @@ export const CalendarScreen: React.FC<CalendarScreenProps> = ({
       <IOSCard isDark={isDark} className="p-4 space-y-3">
         <div className="flex items-center justify-between pb-2 border-b border-white/10">
           <div>
-            <div className="text-base font-bold">{selectedTithi.fullName}</div>
+            <div className="text-base font-bold text-white">{selectedTithi.fullName}</div>
             <div className="text-xs text-slate-400">
               {selectedDate.toLocaleDateString('en-US', {
                 weekday: 'long',
@@ -225,48 +226,32 @@ export const CalendarScreen: React.FC<CalendarScreenProps> = ({
 
         {/* Timings row for this day */}
         <div className="grid grid-cols-3 gap-2 py-1">
-          <div
-            className={`p-2 rounded-[14px] text-center border ${
-              isDark ? 'bg-white/5 border-white/10' : 'bg-slate-50 border-slate-200'
-            }`}
-          >
+          <div className="p-2 rounded-[14px] text-center border bg-white/5 border-white/10">
             <div className="text-[10.5px] text-slate-400 font-medium">Sunrise</div>
-            <div className="text-sm font-bold mt-0.5">{format24(selectedSolar.sunrise)}</div>
+            <div className="text-sm font-bold text-white mt-0.5">{format24(selectedSolar.sunrise)}</div>
           </div>
 
-          <div
-            className={`p-2 rounded-[14px] text-center border ${
-              isDark ? 'bg-white/5 border-white/10' : 'bg-slate-50 border-slate-200'
-            }`}
-          >
+          <div className="p-2 rounded-[14px] text-center border bg-white/5 border-white/10">
             <div className="text-[10.5px] text-slate-400 font-medium">Navkarsi</div>
-            <div className="text-sm font-bold mt-0.5">{format24(selectedSolar.navkarsi)}</div>
+            <div className="text-sm font-bold text-white mt-0.5">{format24(selectedSolar.navkarsi)}</div>
           </div>
 
-          <div
-            className={`p-2 rounded-[14px] text-center border ${
-              isDark ? 'bg-white/5 border-white/10' : 'bg-slate-50 border-slate-200'
-            }`}
-          >
+          <div className="p-2 rounded-[14px] text-center border bg-white/5 border-white/10">
             <div className="text-[10.5px] text-slate-400 font-medium">Sunset</div>
-            <div className="text-sm font-bold mt-0.5">{format24(selectedSolar.sunset)}</div>
+            <div className="text-sm font-bold text-white mt-0.5">{format24(selectedSolar.sunset)}</div>
           </div>
         </div>
 
         {/* Dietary discipline note */}
-        <div
-          className={`p-3 rounded-[16px] text-xs border ${
-            isDark ? 'bg-[#181E2C] border-white/10' : 'bg-slate-100 border-slate-200'
-          }`}
-        >
-          <div className="font-bold mb-1 flex items-center gap-1.5 text-slate-300">
+        <div className="p-3 rounded-[16px] text-xs border bg-white/5 border-white/10">
+          <div className="font-bold mb-1 flex items-center gap-1.5 text-white">
             <AlertCircle size={13} />
             <span>Dietary Disciplines:</span>
           </div>
-          <div className="text-slate-400 leading-relaxed">
+          <div className="text-slate-300 leading-relaxed">
             {selectedTithi.dietaryGuidelines}
           </div>
-          <div className="text-slate-300 font-semibold mt-2">
+          <div className="text-white font-semibold mt-2">
             {selectedTithi.recommendedVows}
           </div>
         </div>
@@ -274,4 +259,3 @@ export const CalendarScreen: React.FC<CalendarScreenProps> = ({
     </div>
   );
 };
-

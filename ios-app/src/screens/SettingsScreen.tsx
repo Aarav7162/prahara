@@ -8,10 +8,7 @@ import {
   Copy,
   Check,
   RotateCcw,
-  Heart,
-  QrCode,
-  Info,
-  ExternalLink
+  Heart
 } from 'lucide-react';
 import { CityLocation, LanguageCode } from '../types';
 import { AudioEngine } from '../engine/AudioEngine';
@@ -61,16 +58,12 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
 
   return (
     <div className="w-full flex flex-col space-y-4 pb-24 animate-in fade-in">
-      <h2 className="text-xl font-bold tracking-tight px-1">Settings & Preferences</h2>
+      <h2 className="text-xl font-bold tracking-tight text-white px-1">Settings & Preferences</h2>
 
       {/* App Brand Header Card */}
       <IOSCard isDark={isDark} className="p-4">
         <div className="flex items-center gap-3.5">
-          <div
-            className={`w-14 h-14 rounded-[18px] flex items-center justify-center shrink-0 border ${
-              isDark ? 'bg-[#222938] border-white/10' : 'bg-[#E8ECF2] border-slate-200'
-            }`}
-          >
+          <div className="w-14 h-14 rounded-[18px] flex items-center justify-center shrink-0 border bg-[#222938] border-white/10">
             <img
               src="./logo.png"
               alt="Prahara Logo"
@@ -78,15 +71,15 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
             />
           </div>
           <div>
-            <h3 className="text-base font-bold">Prahara • પ્રહર</h3>
+            <h3 className="text-base font-bold text-white">Prahara • પ્રહર</h3>
             <p className="text-xs text-slate-400 font-medium">
               Jain Daily Pachakkhan & Tithi Tracker
             </p>
             <div className="flex items-center gap-2 mt-1">
-              <span className="text-[10.5px] px-2 py-0.5 rounded-full font-semibold bg-white/10 text-slate-300">
+              <span className="text-[10.5px] px-2 py-0.5 rounded-full font-semibold bg-white/10 text-white">
                 v1.0.0 iOS Standalone
               </span>
-              <span className="text-[10.5px] text-emerald-400 font-semibold">
+              <span className="text-[10.5px] text-white font-semibold">
                 ● 100% Offline
               </span>
             </div>
@@ -97,29 +90,21 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
       {/* Location Settings */}
       <IOSCard isDark={isDark} className="p-4 space-y-3">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <MapPin size={17} className="text-slate-400" />
+          <div className="flex items-center gap-2 text-white">
+            <MapPin size={17} className="text-white" />
             <span className="text-sm font-bold">Solar Location</span>
           </div>
           <button
             onClick={() => setShowLocationDialog(true)}
-            className={`text-xs font-bold px-3 py-1 rounded-full border transition-all ${
-              isDark
-                ? 'bg-white/10 border-white/10 text-white hover:bg-white/15'
-                : 'bg-black/5 border-black/10 text-slate-900 hover:bg-black/10'
-            }`}
+            className="text-xs font-bold px-3 py-1 rounded-full border border-white/15 bg-white/10 text-white hover:bg-white/20 transition-all"
           >
             Change
           </button>
         </div>
 
-        <div
-          className={`p-3 rounded-[16px] border flex items-center justify-between text-xs ${
-            isDark ? 'bg-white/5 border-white/10' : 'bg-slate-50 border-slate-200'
-          }`}
-        >
+        <div className="p-3 rounded-[16px] border border-white/10 bg-white/5 flex items-center justify-between text-xs">
           <div>
-            <div className="font-bold text-sm">{currentLocation.name}</div>
+            <div className="font-bold text-sm text-white">{currentLocation.name}</div>
             <div className="text-slate-400">{currentLocation.stateOrCountry}</div>
           </div>
           <div className="text-right text-[11px] font-semibold text-slate-400">
@@ -130,8 +115,8 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
 
       {/* Recitation Voice & Language */}
       <IOSCard isDark={isDark} className="p-4 space-y-3">
-        <div className="flex items-center gap-2">
-          <Volume2 size={17} className="text-slate-400" />
+        <div className="flex items-center gap-2 text-white">
+          <Volume2 size={17} className="text-white" />
           <span className="text-sm font-bold">Recitation & Audio</span>
         </div>
 
@@ -139,11 +124,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
           <label className="text-xs font-semibold text-slate-400 mb-2 block">
             Default Recitation Language
           </label>
-          <div
-            className={`flex p-1 rounded-[14px] border ${
-              isDark ? 'bg-[#181D28] border-white/10' : 'bg-[#E8ECF2] border-slate-200'
-            }`}
-          >
+          <div className="flex p-1 rounded-[14px] border border-white/10 bg-[#181D28]">
             {[
               { code: 'gu', label: 'ગુજરાતી' },
               { code: 'hi', label: 'हिन्दी / प्राकृत' },
@@ -154,10 +135,8 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                 onClick={() => onUpdateLanguage(lang.code as LanguageCode)}
                 className={`flex-1 py-1.5 text-xs font-semibold rounded-[10px] transition-all ${
                   preferredLanguage === lang.code
-                    ? isDark
-                      ? 'bg-[#2A3448] text-white shadow'
-                      : 'bg-white text-slate-900 shadow'
-                    : 'text-slate-400 hover:text-slate-200'
+                    ? 'bg-white text-black shadow font-bold'
+                    : 'text-slate-400 hover:text-white'
                 }`}
               >
                 {lang.label}
@@ -177,12 +156,8 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                 onClick={() => handleSpeedChange(s)}
                 className={`flex-1 py-1.5 rounded-[12px] text-xs font-bold border transition-all ${
                   Math.abs(speed - s) < 0.05
-                    ? isDark
-                      ? 'bg-white text-slate-900 border-white'
-                      : 'bg-slate-900 text-white border-slate-900'
-                    : isDark
-                    ? 'bg-white/5 border-white/10 text-slate-400'
-                    : 'bg-slate-100 border-slate-200 text-slate-600'
+                    ? 'bg-white text-black border-white shadow'
+                    : 'bg-white/5 border-white/10 text-slate-400 hover:text-white'
                 }`}
               >
                 {s}x
@@ -192,28 +167,28 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
         </div>
       </IOSCard>
 
-      {/* Notifications & Reminders */}
+      {/* Notifications & Reminders (Pure Monochrome) */}
       <IOSCard isDark={isDark} className="p-4 space-y-3">
-        <div className="flex items-center gap-2">
-          <Bell size={17} className="text-slate-400" />
+        <div className="flex items-center gap-2 text-white">
+          <Bell size={17} className="text-white" />
           <span className="text-sm font-bold">Parva Reminders</span>
         </div>
 
         <div className="space-y-2">
           <div className="flex items-center justify-between text-xs py-1">
             <div>
-              <div className="font-semibold">Parva Eve Reminder (8:00 PM)</div>
+              <div className="font-semibold text-white">Parva Eve Reminder (8:00 PM)</div>
               <div className="text-slate-400">Notifies of upcoming Atham / Chaudas Parva</div>
             </div>
             <button
               onClick={() => setEveningAlert(!eveningAlert)}
-              className={`w-11 h-6 flex items-center rounded-full p-1 transition-colors ${
-                eveningAlert ? 'bg-emerald-500' : isDark ? 'bg-white/15' : 'bg-slate-300'
+              className={`w-11 h-6 flex items-center rounded-full p-1 transition-colors border ${
+                eveningAlert ? 'bg-white border-white' : 'bg-white/15 border-white/20'
               }`}
             >
               <div
-                className={`bg-white w-4 h-4 rounded-full shadow-md transform transition-transform ${
-                  eveningAlert ? 'translate-x-5' : ''
+                className={`w-4 h-4 rounded-full shadow-md transform transition-transform ${
+                  eveningAlert ? 'translate-x-5 bg-black' : 'bg-white'
                 }`}
               />
             </button>
@@ -221,18 +196,18 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
 
           <div className="flex items-center justify-between text-xs py-1">
             <div>
-              <div className="font-semibold">Morning Sunrise Alert (6:00 AM)</div>
+              <div className="font-semibold text-white">Morning Sunrise Alert (6:00 AM)</div>
               <div className="text-slate-400">Daily reminder for Navkarsi vow</div>
             </div>
             <button
               onClick={() => setMorningAlert(!morningAlert)}
-              className={`w-11 h-6 flex items-center rounded-full p-1 transition-colors ${
-                morningAlert ? 'bg-emerald-500' : isDark ? 'bg-white/15' : 'bg-slate-300'
+              className={`w-11 h-6 flex items-center rounded-full p-1 transition-colors border ${
+                morningAlert ? 'bg-white border-white' : 'bg-white/15 border-white/20'
               }`}
             >
               <div
-                className={`bg-white w-4 h-4 rounded-full shadow-md transform transition-transform ${
-                  morningAlert ? 'translate-x-5' : ''
+                className={`w-4 h-4 rounded-full shadow-md transform transition-transform ${
+                  morningAlert ? 'translate-x-5 bg-black' : 'bg-white'
                 }`}
               />
             </button>
@@ -240,45 +215,27 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
         </div>
       </IOSCard>
 
-      {/* Appearance & Walkthrough */}
-      <IOSCard isDark={isDark} className="p-4 space-y-3">
+      {/* Walkthrough Guide trigger */}
+      <IOSCard isDark={isDark} className="p-4">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2 text-sm font-bold">
-            {isDark ? <Moon size={17} className="text-slate-400" /> : <Sun size={17} className="text-slate-400" />}
-            <span>Liquid Glass Appearance</span>
+          <div>
+            <div className="text-sm font-bold text-white">Introductory Walkthrough</div>
+            <div className="text-xs text-slate-400">Replay the visual features guide</div>
           </div>
           <button
-            onClick={onToggleTheme}
-            className={`text-xs font-semibold px-3 py-1 rounded-full border transition-all ${
-              isDark
-                ? 'bg-white/10 border-white/10 text-white'
-                : 'bg-black/5 border-black/10 text-slate-900'
-            }`}
-          >
-            {isDark ? 'Dark Mode' : 'Light Mode'}
-          </button>
-        </div>
-
-        <div className="pt-2 border-t border-white/10 flex items-center justify-between">
-          <span className="text-xs text-slate-400">Introductory Walkthrough</span>
-          <button
             onClick={onReplayTutorial}
-            className={`flex items-center gap-1.5 text-xs font-semibold px-3 py-1 rounded-full border transition-all ${
-              isDark
-                ? 'bg-white/10 border-white/10 text-slate-200'
-                : 'bg-black/5 border-black/10 text-slate-800'
-            }`}
+            className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full border border-white/15 bg-white/10 text-white hover:bg-white/20 transition-all"
           >
             <RotateCcw size={13} />
-            <span>Replay Guide</span>
+            <span>Open Guide</span>
           </button>
         </div>
       </IOSCard>
 
       {/* Support & Sevabhāv (Donation) */}
       <IOSCard isDark={isDark} className="p-4 space-y-3">
-        <div className="flex items-center gap-2">
-          <Heart size={17} className="text-rose-400" />
+        <div className="flex items-center gap-2 text-white">
+          <Heart size={17} className="text-white" />
           <span className="text-sm font-bold">Support Prahara (Seva & Dana)</span>
         </div>
         <p className="text-xs text-slate-400 leading-relaxed">
@@ -287,23 +244,17 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
           your contribution supports continuous maintenance and servers.
         </p>
 
-        <div
-          className={`p-3 rounded-[16px] border flex items-center justify-between ${
-            isDark ? 'bg-white/5 border-white/10' : 'bg-slate-50 border-slate-200'
-          }`}
-        >
+        <div className="p-3 rounded-[16px] border border-white/10 bg-white/5 flex items-center justify-between">
           <div>
             <div className="text-[10px] text-slate-400 font-semibold uppercase">UPI ID</div>
-            <div className="text-sm font-mono font-bold">{upiId}</div>
+            <div className="text-sm font-mono font-bold text-white">{upiId}</div>
           </div>
           <button
             onClick={handleCopyUpi}
             className={`flex items-center gap-1 text-xs font-bold px-3 py-1.5 rounded-full border transition-all ${
               copiedUpi
-                ? 'bg-emerald-500 text-white border-emerald-500'
-                : isDark
-                ? 'bg-white/10 border-white/10 text-white hover:bg-white/15'
-                : 'bg-black/5 border-black/10 text-slate-900 hover:bg-black/10'
+                ? 'bg-white text-black border-white'
+                : 'bg-white/10 border-white/15 text-white hover:bg-white/20'
             }`}
           >
             {copiedUpi ? <Check size={13} /> : <Copy size={13} />}
@@ -332,4 +283,3 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
     </div>
   );
 };
-

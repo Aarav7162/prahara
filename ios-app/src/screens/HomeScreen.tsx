@@ -15,7 +15,7 @@ import {
 import { CityLocation, SolarTimes, TithiInfo, CountdownState, PachakkhanItem } from '../types';
 import { SolarAstronomyEngine } from '../engine/SolarAstronomyEngine';
 import { JainTithiEngine } from '../engine/JainTithiEngine';
-import { allPachakkhans, getPachakkhan } from '../repository/PachakkhanRepository';
+import { getPachakkhan } from '../repository/PachakkhanRepository';
 import { IOSParvaBannerCard } from '../components/IOSParvaBannerCard';
 import { IOSHeroSplitCard } from '../components/IOSHeroSplitCard';
 import { IOSTimingCard } from '../components/IOSTimingCard';
@@ -25,7 +25,7 @@ import { ObservanceDialog } from '../components/ObservanceDialog';
 interface HomeScreenProps {
   currentLocation: CityLocation;
   onUpdateLocation: (loc: CityLocation) => void;
-  onSelectPachakkhan: (item: PachakkhanItem) => void;
+  onSelectPachakkhan: (item: PachakkhanItem, timeFormatted?: string, title?: string) => void;
   isDark?: boolean;
 }
 
@@ -114,7 +114,6 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         daylightProgressRatio: 0.5
       };
     } else {
-      // Past sunset, countdown to tomorrow's Sunrise
       const tomorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
       const tomorrowSolar = SolarAstronomyEngine.calculateSolarTimes(
         tomorrow,
@@ -144,26 +143,15 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
     return Math.min(1, Math.max(0, elapsed / total));
   };
 
-  const isCurrentActive = (target: Date, nextTarget?: Date): boolean => {
-    if (nextTarget) {
-      return now.getTime() >= target.getTime() && now.getTime() < nextTarget.getTime();
-    }
-    return now.getTime() >= target.getTime();
-  };
-
   return (
     <div className="w-full flex flex-col space-y-3 pb-24 animate-in fade-in">
       {/* Sleek Minimalist Location Pill */}
       <div className="flex items-center justify-between px-1 pt-1">
         <button
           onClick={() => setShowLocationDialog(true)}
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border transition-all active:scale-95 ${
-            isDark
-              ? 'bg-white/10 border-white/10 text-slate-100 hover:bg-white/15'
-              : 'bg-black/5 border-black/10 text-slate-900 hover:bg-black/10'
-          }`}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border border-white/15 bg-white/5 text-white hover:bg-white/10 transition-all active:scale-95"
         >
-          <MapPin size={13} className="text-slate-400" />
+          <MapPin size={13} className="text-white" />
           <span>
             {currentLocation.name}
             {currentLocation.isAutoDetected ? ' • GPS Auto' : ''}
@@ -172,12 +160,16 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         </button>
 
         <button
-          onClick={() => setShowLocationDialog(true)}
-          className={`p-1.5 rounded-full border transition-all active:scale-95 ${
-            isDark
-              ? 'bg-white/10 border-white/10 text-slate-300 hover:bg-white/15'
-              : 'bg-black/5 border-black/10 text-slate-700 hover:bg-black/10'
-          }`}
+          onClick={async () => {
+            try {
+              const { LocationEngine } = await import('../engine/LocationEngine');
+              const detected = await LocationEngine.detectLocation();
+              onUpdateLocation(detected);
+            } catch {
+              setShowLocationDialog(true);
+            }
+          }}
+          className="p-1.5 rounded-full border border-white/15 bg-white/5 text-white hover:bg-white/10 transition-all active:scale-95"
           title="Refresh Location"
         >
           <RefreshCw size={13} />
@@ -208,8 +200,8 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
 
       {/* Section Title */}
       <div className="flex items-center justify-between px-1 pt-1">
-        <h3 className="text-[15px] font-semibold text-slate-400">Pachakkhan Timings</h3>
-        <span className="text-[11px] font-medium text-slate-500">IST (UTC+5:30)</span>
+        <h3 className="text-[14.5px] font-bold text-slate-300">Pachakkhan Timings</h3>
+        <span className="text-[11px] font-semibold text-slate-400">IST (UTC+5:30)</span>
       </div>
 
       {/* 3-Column Timing Grids */}
@@ -220,35 +212,35 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
             <IOSTimingCard
               title="Surya Uday"
               timeFormatted={format24(solarTimes.sunrise)}
-              icon={<Sunrise size={18} />}
+              icon={<Sunrise size={18} className="text-white" />}
               progressFraction={now >= solarTimes.sunrise ? 1 : 0.55}
               isDark={isDark}
               onClick={() => {
                 const item = getPachakkhan('NAVKARSI');
-                if (item) onSelectPachakkhan(item);
+                if (item) onSelectPachakkhan(item, format24(solarTimes.sunrise), 'Surya Uday');
               }}
             />
             <IOSTimingCard
               title="Navkarsi"
               timeFormatted={format24(solarTimes.navkarsi)}
-              icon={<Sun size={18} />}
+              icon={<Sun size={18} className="text-white" />}
               progressFraction={calcProgress(solarTimes.navkarsi) || 0.45}
               isCurrentActive={true}
               isDark={isDark}
               onClick={() => {
                 const item = getPachakkhan('NAVKARSI');
-                if (item) onSelectPachakkhan(item);
+                if (item) onSelectPachakkhan(item, format24(solarTimes.navkarsi), 'Navkarsi');
               }}
             />
             <IOSTimingCard
               title="Porsi"
               timeFormatted={format24(solarTimes.porsi)}
-              icon={<Sparkles size={18} />}
+              icon={<Sparkles size={18} className="text-white" />}
               progressFraction={calcProgress(solarTimes.porsi) || 0.3}
               isDark={isDark}
               onClick={() => {
                 const item = getPachakkhan('PORSI');
-                if (item) onSelectPachakkhan(item);
+                if (item) onSelectPachakkhan(item, format24(solarTimes.porsi), 'Porsi');
               }}
             />
           </div>
@@ -258,34 +250,34 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
             <IOSTimingCard
               title="Purimaddh"
               timeFormatted={format24(solarTimes.purimaddh)}
-              icon={<Sun size={18} />}
+              icon={<Sun size={18} className="text-white" />}
               progressFraction={calcProgress(solarTimes.purimaddh) || 0.35}
               isDark={isDark}
               onClick={() => {
                 const item = getPachakkhan('PURIMADDH');
-                if (item) onSelectPachakkhan(item);
+                if (item) onSelectPachakkhan(item, format24(solarTimes.purimaddh), 'Purimaddh');
               }}
             />
             <IOSTimingCard
               title="Sadh-Porsi"
               timeFormatted={format24(solarTimes.sadhPorsi)}
-              icon={<Clock size={18} />}
+              icon={<Clock size={18} className="text-white" />}
               progressFraction={calcProgress(solarTimes.sadhPorsi) || 0.25}
               isDark={isDark}
               onClick={() => {
                 const item = getPachakkhan('SADH_PORSI');
-                if (item) onSelectPachakkhan(item);
+                if (item) onSelectPachakkhan(item, format24(solarTimes.sadhPorsi), 'Sadh-Porsi');
               }}
             />
             <IOSTimingCard
               title="Chauvihar"
               timeFormatted={format24(solarTimes.chauvihar)}
-              icon={<Sunset size={18} />}
+              icon={<Sunset size={18} className="text-white" />}
               progressFraction={calcProgress(solarTimes.chauvihar) || 0.6}
               isDark={isDark}
               onClick={() => {
                 const item = getPachakkhan('CHAUVIHAR');
-                if (item) onSelectPachakkhan(item);
+                if (item) onSelectPachakkhan(item, format24(solarTimes.chauvihar), 'Chauvihar');
               }}
             />
           </div>
@@ -297,34 +289,34 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
             <IOSTimingCard
               title="Avaddh"
               timeFormatted={format24(solarTimes.avaddh)}
-              icon={<Clock size={18} />}
+              icon={<Clock size={18} className="text-white" />}
               progressFraction={calcProgress(solarTimes.avaddh) || 0.5}
               isDark={isDark}
               onClick={() => {
                 const item = getPachakkhan('AVADDH');
-                if (item) onSelectPachakkhan(item);
+                if (item) onSelectPachakkhan(item, format24(solarTimes.avaddh), 'Avaddh');
               }}
             />
             <IOSTimingCard
               title="Ekashna"
               timeFormatted="Once"
-              icon={<Utensils size={18} />}
+              icon={<Utensils size={18} className="text-white" />}
               progressFraction={0.5}
               isDark={isDark}
               onClick={() => {
                 const item = getPachakkhan('EKASHNA');
-                if (item) onSelectPachakkhan(item);
+                if (item) onSelectPachakkhan(item, 'Once Seated', 'Ekashna');
               }}
             />
             <IOSTimingCard
               title="Biyashna"
               timeFormatted="Twice"
-              icon={<Utensils size={18} />}
+              icon={<Utensils size={18} className="text-white" />}
               progressFraction={0.5}
               isDark={isDark}
               onClick={() => {
                 const item = getPachakkhan('BIYASHNA');
-                if (item) onSelectPachakkhan(item);
+                if (item) onSelectPachakkhan(item, 'Twice Seated', 'Biyashna');
               }}
             />
           </div>
@@ -333,34 +325,34 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
             <IOSTimingCard
               title="Ayambil"
               timeFormatted="No Vigai"
-              icon={<Sparkles size={18} />}
+              icon={<Sparkles size={18} className="text-white" />}
               progressFraction={0.5}
               isDark={isDark}
               onClick={() => {
                 const item = getPachakkhan('AYAMBIL');
-                if (item) onSelectPachakkhan(item);
+                if (item) onSelectPachakkhan(item, 'No Vigai', 'Ayambil');
               }}
             />
             <IOSTimingCard
               title="Upvas"
               timeFormatted="Fast"
-              icon={<Moon size={18} />}
+              icon={<Moon size={18} className="text-white" />}
               progressFraction={0.8}
               isDark={isDark}
               onClick={() => {
                 const item = getPachakkhan('UPVAS');
-                if (item) onSelectPachakkhan(item);
+                if (item) onSelectPachakkhan(item, 'Complete Fast', 'Upvas');
               }}
             />
             <IOSTimingCard
               title="Tivihar"
               timeFormatted="Water Only"
-              icon={<Droplet size={18} />}
+              icon={<Droplet size={18} className="text-white" />}
               progressFraction={0.5}
               isDark={isDark}
               onClick={() => {
                 const item = getPachakkhan('CHAUVIHAR');
-                if (item) onSelectPachakkhan(item);
+                if (item) onSelectPachakkhan(item, 'Water Only', 'Tivihar');
               }}
             />
           </div>
@@ -372,26 +364,14 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         <button
           onClick={() => setCurrentPage(0)}
           className={`h-1.5 rounded-full transition-all ${
-            currentPage === 0
-              ? isDark
-                ? 'w-6 bg-white'
-                : 'w-6 bg-slate-900'
-              : isDark
-              ? 'w-1.5 bg-slate-600'
-              : 'w-1.5 bg-slate-300'
+            currentPage === 0 ? 'w-6 bg-white' : 'w-1.5 bg-white/30'
           }`}
           aria-label="Primary Timings"
         />
         <button
           onClick={() => setCurrentPage(1)}
           className={`h-1.5 rounded-full transition-all ${
-            currentPage === 1
-              ? isDark
-                ? 'w-6 bg-white'
-                : 'w-6 bg-slate-900'
-              : isDark
-              ? 'w-1.5 bg-slate-600'
-              : 'w-1.5 bg-slate-300'
+            currentPage === 1 ? 'w-6 bg-white' : 'w-1.5 bg-white/30'
           }`}
           aria-label="Extended Vows"
         />
@@ -416,4 +396,3 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
     </div>
   );
 };
-

@@ -15,15 +15,9 @@ export const ParvaBadge: React.FC<ParvaBadgeProps> = ({
 }) => {
   return (
     <div
-      className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold ${
-        isDark ? 'bg-[#222836] text-slate-100' : 'bg-[#E9ECF2] text-slate-900'
-      } ${className}`}
+      className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border border-white/20 bg-white text-black shadow-sm ${className}`}
     >
-      <span
-        className={`w-1.5 h-1.5 rounded-full ${
-          isMajorParva ? (isDark ? 'bg-white' : 'bg-slate-900') : 'bg-slate-400'
-        }`}
-      />
+      <span className="w-1.5 h-1.5 rounded-full bg-black" />
       <span>{text}</span>
     </div>
   );

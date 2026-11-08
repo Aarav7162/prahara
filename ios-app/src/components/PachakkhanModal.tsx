@@ -180,10 +180,10 @@ export const PachakkhanModal: React.FC<PachakkhanModalProps> = ({
                 onClick={handleTogglePlay}
                 className={`w-11 h-11 rounded-full flex items-center justify-center shrink-0 transition-transform active:scale-90 ${
                   isCurrentPlaying
-                    ? 'bg-rose-500 text-white'
+                    ? 'bg-white text-black ring-2 ring-white/50'
                     : isDark
-                    ? 'bg-white text-slate-950 hover:bg-slate-200'
-                    : 'bg-slate-950 text-white hover:bg-slate-800'
+                    ? 'bg-white text-black hover:bg-slate-200'
+                    : 'bg-black text-white hover:bg-slate-800'
                 }`}
               >
                 {isCurrentPlaying ? <Pause size={20} /> : <Play size={20} className="ml-0.5" />}
