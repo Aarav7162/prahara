@@ -38,10 +38,14 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
   const [showLocationDialog, setShowLocationDialog] = useState(false);
   const [showObservanceDialog, setShowObservanceDialog] = useState(false);
   const [currentPage, setCurrentPage] = useState<0 | 1>(0);
+  const [dragOffset, setDragOffset] = useState<number>(0);
+  const [isDragging, setIsDragging] = useState<boolean>(false);
   const [now, setNow] = useState(new Date());
 
-  const carouselRef = useRef<HTMLDivElement>(null);
   const touchStartX = useRef<number | null>(null);
+  const touchStartY = useRef<number | null>(null);
+  const isHorizontalSwipe = useRef<boolean | null>(null);
+  const dragDistance = useRef<number>(0);
 
   // Update clock every second
   useEffect(() => {
@@ -146,38 +150,61 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
     return Math.min(1, Math.max(0, elapsed / total));
   };
 
-  const handleScroll = () => {
-    if (!carouselRef.current) return;
-    const { scrollLeft, clientWidth } = carouselRef.current;
-    if (clientWidth === 0) return;
-    const pageIndex = Math.round(scrollLeft / clientWidth);
-    if (pageIndex === 0 || pageIndex === 1) {
-      setCurrentPage(pageIndex);
-    }
-  };
-
-  const scrollToPage = (pageIndex: 0 | 1) => {
-    if (!carouselRef.current) return;
-    carouselRef.current.scrollTo({
-      left: pageIndex * carouselRef.current.clientWidth,
-      behavior: 'smooth'
-    });
-    setCurrentPage(pageIndex);
-  };
-
+  // Touch Swipe Handlers for Fluid Gesture Slider
   const handleTouchStart = (e: React.TouchEvent) => {
     touchStartX.current = e.touches[0].clientX;
+    touchStartY.current = e.touches[0].clientY;
+    isHorizontalSwipe.current = null;
+    dragDistance.current = 0;
+    setIsDragging(true);
   };
 
-  const handleTouchEnd = (e: React.TouchEvent) => {
-    if (touchStartX.current === null) return;
-    const diffX = touchStartX.current - e.changedTouches[0].clientX;
-    touchStartX.current = null;
-    if (diffX > 45 && currentPage === 0) {
-      scrollToPage(1);
-    } else if (diffX < -45 && currentPage === 1) {
-      scrollToPage(0);
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (touchStartX.current === null || touchStartY.current === null) return;
+    const currentX = e.touches[0].clientX;
+    const currentY = e.touches[0].clientY;
+    const diffX = currentX - touchStartX.current;
+    const diffY = currentY - touchStartY.current;
+
+    // Detect gesture direction
+    if (isHorizontalSwipe.current === null) {
+      if (Math.abs(diffX) > 6 || Math.abs(diffY) > 6) {
+        isHorizontalSwipe.current = Math.abs(diffX) > Math.abs(diffY);
+      }
     }
+
+    if (isHorizontalSwipe.current) {
+      let offset = diffX;
+      // Rubber banding at edges
+      if ((currentPage === 0 && diffX > 0) || (currentPage === 1 && diffX < 0)) {
+        offset = diffX * 0.25;
+      }
+      dragDistance.current = Math.abs(diffX);
+      setDragOffset(offset);
+    }
+  };
+
+  const handleTouchEnd = () => {
+    setIsDragging(false);
+    if (isHorizontalSwipe.current) {
+      if (dragOffset < -35 && currentPage === 0) {
+        setCurrentPage(1);
+      } else if (dragOffset > 35 && currentPage === 1) {
+        setCurrentPage(0);
+      }
+    }
+    setDragOffset(0);
+    touchStartX.current = null;
+    touchStartY.current = null;
+    isHorizontalSwipe.current = null;
+    setTimeout(() => {
+      dragDistance.current = 0;
+    }, 120);
+  };
+
+  const handleCardClick = (action: () => void) => {
+    if (dragDistance.current > 12) return;
+    action();
   };
 
   return (
@@ -186,7 +213,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
       <div className="flex items-center justify-between px-1 pt-1">
         <button
           onClick={() => setShowLocationDialog(true)}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border border-white/15 bg-white/5 text-white hover:bg-white/10 transition-all active:scale-95"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border border-white/15 bg-white/5 text-white hover:bg-white/10 transition-all active:scale-95 cursor-pointer"
         >
           <MapPin size={13} className="text-white" />
           <span>
@@ -206,7 +233,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
               setShowLocationDialog(true);
             }
           }}
-          className="p-1.5 rounded-full border border-white/15 bg-white/5 text-white hover:bg-white/10 transition-all active:scale-95"
+          className="p-1.5 rounded-full border border-white/15 bg-white/5 text-white hover:bg-white/10 transition-all active:scale-95 cursor-pointer"
           title="Refresh Location"
         >
           <RefreshCw size={13} />
@@ -235,195 +262,242 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         isDark={isDark}
       />
 
-      {/* Section Title with Swipe Hint */}
+      {/* Interactive Segmented Tabs with Swipe Support */}
       <div className="flex items-center justify-between px-1 pt-1">
-        <div className="flex items-center gap-2">
-          <h3 className="text-[14.5px] font-bold text-slate-300">Pachakkhan Timings</h3>
-          <span className="text-[10px] uppercase tracking-wider text-slate-500 font-bold bg-white/5 px-2 py-0.5 rounded-md">
-            Swipe ‹ ›
-          </span>
+        <div className="flex items-center p-0.5 bg-white/8 border border-white/12 rounded-xl">
+          <button
+            onClick={() => setCurrentPage(0)}
+            className={`px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+              currentPage === 0
+                ? 'bg-white text-black shadow-sm'
+                : 'text-slate-400 hover:text-white'
+            }`}
+          >
+            Primary (6)
+          </button>
+          <button
+            onClick={() => setCurrentPage(1)}
+            className={`px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+              currentPage === 1
+                ? 'bg-white text-black shadow-sm'
+                : 'text-slate-400 hover:text-white'
+            }`}
+          >
+            Penance (6)
+          </button>
         </div>
         <span className="text-[11px] font-semibold text-slate-400">IST (UTC+5:30)</span>
       </div>
 
-      {/* Touch-Swipeable 3-Column Timing Carousel */}
+      {/* Touch-Swipeable 3-Column Timing Slider */}
       <div
-        ref={carouselRef}
-        onScroll={handleScroll}
+        className="w-full overflow-hidden select-none touch-pan-y"
         onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
-        className="w-full flex overflow-x-auto snap-x snap-mandatory scroll-smooth no-scrollbar touch-pan-x"
-        style={{ WebkitOverflowScrolling: 'touch' }}
+        onTouchCancel={handleTouchEnd}
       >
-        {/* Page 1: 6 Primary Timings */}
-        <div className="w-full min-w-full shrink-0 snap-center pr-1 space-y-2.5">
-          {/* Row 1: Surya Uday | Navkarsi | Porsi */}
-          <div className="grid grid-cols-3 gap-2.5">
-            <IOSTimingCard
-              title="Surya Uday"
-              timeFormatted={format24(solarTimes.sunrise)}
-              icon={<Sunrise size={18} className="text-white" />}
-              progressFraction={now >= solarTimes.sunrise ? 1 : 0.55}
-              isDark={isDark}
-              onClick={() => {
-                const item = getPachakkhan('NAVKARSI');
-                if (item) onSelectPachakkhan(item, format24(solarTimes.sunrise), 'Surya Uday');
-              }}
-            />
-            <IOSTimingCard
-              title="Navkarsi"
-              timeFormatted={format24(solarTimes.navkarsi)}
-              icon={<Sun size={18} className="text-white" />}
-              progressFraction={calcProgress(solarTimes.navkarsi) || 0.45}
-              isCurrentActive={true}
-              isDark={isDark}
-              onClick={() => {
-                const item = getPachakkhan('NAVKARSI');
-                if (item) onSelectPachakkhan(item, format24(solarTimes.navkarsi), 'Navkarsi');
-              }}
-            />
-            <IOSTimingCard
-              title="Porsi"
-              timeFormatted={format24(solarTimes.porsi)}
-              icon={<Sparkles size={18} className="text-white" />}
-              progressFraction={calcProgress(solarTimes.porsi) || 0.3}
-              isDark={isDark}
-              onClick={() => {
-                const item = getPachakkhan('PORSI');
-                if (item) onSelectPachakkhan(item, format24(solarTimes.porsi), 'Porsi');
-              }}
-            />
+        <div
+          className="flex w-full"
+          style={{
+            transform: `translateX(calc(-${currentPage * 100}% + ${dragOffset}px))`,
+            transition: isDragging ? 'none' : 'transform 0.3s cubic-bezier(0.16, 1, 0.3, 1)'
+          }}
+        >
+          {/* Page 0: 6 Primary Timings */}
+          <div className="w-full min-w-full shrink-0 pr-0.5 space-y-2.5">
+            {/* Row 1: Surya Uday | Navkarsi | Porsi */}
+            <div className="grid grid-cols-3 gap-2.5">
+              <IOSTimingCard
+                title="Surya Uday"
+                timeFormatted={format24(solarTimes.sunrise)}
+                icon={<Sunrise size={18} className="text-white" />}
+                progressFraction={now >= solarTimes.sunrise ? 1 : 0.55}
+                isDark={isDark}
+                onClick={() => {
+                  handleCardClick(() => {
+                    const item = getPachakkhan('NAVKARSI');
+                    if (item) onSelectPachakkhan(item, format24(solarTimes.sunrise), 'Surya Uday');
+                  });
+                }}
+              />
+              <IOSTimingCard
+                title="Navkarsi"
+                timeFormatted={format24(solarTimes.navkarsi)}
+                icon={<Sun size={18} className="text-white" />}
+                progressFraction={calcProgress(solarTimes.navkarsi) || 0.45}
+                isCurrentActive={true}
+                isDark={isDark}
+                onClick={() => {
+                  handleCardClick(() => {
+                    const item = getPachakkhan('NAVKARSI');
+                    if (item) onSelectPachakkhan(item, format24(solarTimes.navkarsi), 'Navkarsi');
+                  });
+                }}
+              />
+              <IOSTimingCard
+                title="Porsi"
+                timeFormatted={format24(solarTimes.porsi)}
+                icon={<Sparkles size={18} className="text-white" />}
+                progressFraction={calcProgress(solarTimes.porsi) || 0.3}
+                isDark={isDark}
+                onClick={() => {
+                  handleCardClick(() => {
+                    const item = getPachakkhan('PORSI');
+                    if (item) onSelectPachakkhan(item, format24(solarTimes.porsi), 'Porsi');
+                  });
+                }}
+              />
+            </div>
+
+            {/* Row 2: Purimaddh | Sadh-Porsi | Chauvihar */}
+            <div className="grid grid-cols-3 gap-2.5">
+              <IOSTimingCard
+                title="Purimaddh"
+                timeFormatted={format24(solarTimes.purimaddh)}
+                icon={<Sun size={18} className="text-white" />}
+                progressFraction={calcProgress(solarTimes.purimaddh) || 0.35}
+                isDark={isDark}
+                onClick={() => {
+                  handleCardClick(() => {
+                    const item = getPachakkhan('PURIMADDH');
+                    if (item) onSelectPachakkhan(item, format24(solarTimes.purimaddh), 'Purimaddh');
+                  });
+                }}
+              />
+              <IOSTimingCard
+                title="Sadh-Porsi"
+                timeFormatted={format24(solarTimes.sadhPorsi)}
+                icon={<Clock size={18} className="text-white" />}
+                progressFraction={calcProgress(solarTimes.sadhPorsi) || 0.25}
+                isDark={isDark}
+                onClick={() => {
+                  handleCardClick(() => {
+                    const item = getPachakkhan('SADH_PORSI');
+                    if (item) onSelectPachakkhan(item, format24(solarTimes.sadhPorsi), 'Sadh-Porsi');
+                  });
+                }}
+              />
+              <IOSTimingCard
+                title="Chauvihar"
+                timeFormatted={format24(solarTimes.chauvihar)}
+                icon={<Sunset size={18} className="text-white" />}
+                progressFraction={calcProgress(solarTimes.chauvihar) || 0.6}
+                isDark={isDark}
+                onClick={() => {
+                  handleCardClick(() => {
+                    const item = getPachakkhan('CHAUVIHAR');
+                    if (item) onSelectPachakkhan(item, format24(solarTimes.chauvihar), 'Chauvihar');
+                  });
+                }}
+              />
+            </div>
           </div>
 
-          {/* Row 2: Purimaddh | Sadh-Porsi | Chauvihar */}
-          <div className="grid grid-cols-3 gap-2.5">
-            <IOSTimingCard
-              title="Purimaddh"
-              timeFormatted={format24(solarTimes.purimaddh)}
-              icon={<Sun size={18} className="text-white" />}
-              progressFraction={calcProgress(solarTimes.purimaddh) || 0.35}
-              isDark={isDark}
-              onClick={() => {
-                const item = getPachakkhan('PURIMADDH');
-                if (item) onSelectPachakkhan(item, format24(solarTimes.purimaddh), 'Purimaddh');
-              }}
-            />
-            <IOSTimingCard
-              title="Sadh-Porsi"
-              timeFormatted={format24(solarTimes.sadhPorsi)}
-              icon={<Clock size={18} className="text-white" />}
-              progressFraction={calcProgress(solarTimes.sadhPorsi) || 0.25}
-              isDark={isDark}
-              onClick={() => {
-                const item = getPachakkhan('SADH_PORSI');
-                if (item) onSelectPachakkhan(item, format24(solarTimes.sadhPorsi), 'Sadh-Porsi');
-              }}
-            />
-            <IOSTimingCard
-              title="Chauvihar"
-              timeFormatted={format24(solarTimes.chauvihar)}
-              icon={<Sunset size={18} className="text-white" />}
-              progressFraction={calcProgress(solarTimes.chauvihar) || 0.6}
-              isDark={isDark}
-              onClick={() => {
-                const item = getPachakkhan('CHAUVIHAR');
-                if (item) onSelectPachakkhan(item, format24(solarTimes.chauvihar), 'Chauvihar');
-              }}
-            />
-          </div>
-        </div>
+          {/* Page 1: Extended Penance Vows (Avaddh, Ekashna, Biyashna, Ayambil, Upvas, Tivihar) */}
+          <div className="w-full min-w-full shrink-0 pl-0.5 space-y-2.5">
+            <div className="grid grid-cols-3 gap-2.5">
+              <IOSTimingCard
+                title="Avaddh"
+                timeFormatted={format24(solarTimes.avaddh)}
+                icon={<Clock size={18} className="text-white" />}
+                progressFraction={calcProgress(solarTimes.avaddh) || 0.5}
+                isDark={isDark}
+                onClick={() => {
+                  handleCardClick(() => {
+                    const item = getPachakkhan('AVADDH');
+                    if (item) onSelectPachakkhan(item, format24(solarTimes.avaddh), 'Avaddh');
+                  });
+                }}
+              />
+              <IOSTimingCard
+                title="Ekashna"
+                timeFormatted="Once"
+                icon={<Utensils size={18} className="text-white" />}
+                progressFraction={0.5}
+                isDark={isDark}
+                onClick={() => {
+                  handleCardClick(() => {
+                    const item = getPachakkhan('EKASHNA');
+                    if (item) onSelectPachakkhan(item, 'Once Seated', 'Ekashna');
+                  });
+                }}
+              />
+              <IOSTimingCard
+                title="Biyashna"
+                timeFormatted="Twice"
+                icon={<Utensils size={18} className="text-white" />}
+                progressFraction={0.5}
+                isDark={isDark}
+                onClick={() => {
+                  handleCardClick(() => {
+                    const item = getPachakkhan('BIYASHNA');
+                    if (item) onSelectPachakkhan(item, 'Twice Seated', 'Biyashna');
+                  });
+                }}
+              />
+            </div>
 
-        {/* Page 2: Extended Penance Vows (Avaddh, Ekashna, Biyashna, Ayambil, Upvas, Tivihar) */}
-        <div className="w-full min-w-full shrink-0 snap-center pl-1 space-y-2.5">
-          <div className="grid grid-cols-3 gap-2.5">
-            <IOSTimingCard
-              title="Avaddh"
-              timeFormatted={format24(solarTimes.avaddh)}
-              icon={<Clock size={18} className="text-white" />}
-              progressFraction={calcProgress(solarTimes.avaddh) || 0.5}
-              isDark={isDark}
-              onClick={() => {
-                const item = getPachakkhan('AVADDH');
-                if (item) onSelectPachakkhan(item, format24(solarTimes.avaddh), 'Avaddh');
-              }}
-            />
-            <IOSTimingCard
-              title="Ekashna"
-              timeFormatted="Once"
-              icon={<Utensils size={18} className="text-white" />}
-              progressFraction={0.5}
-              isDark={isDark}
-              onClick={() => {
-                const item = getPachakkhan('EKASHNA');
-                if (item) onSelectPachakkhan(item, 'Once Seated', 'Ekashna');
-              }}
-            />
-            <IOSTimingCard
-              title="Biyashna"
-              timeFormatted="Twice"
-              icon={<Utensils size={18} className="text-white" />}
-              progressFraction={0.5}
-              isDark={isDark}
-              onClick={() => {
-                const item = getPachakkhan('BIYASHNA');
-                if (item) onSelectPachakkhan(item, 'Twice Seated', 'Biyashna');
-              }}
-            />
-          </div>
-
-          <div className="grid grid-cols-3 gap-2.5">
-            <IOSTimingCard
-              title="Ayambil"
-              timeFormatted="No Vigai"
-              icon={<Sparkles size={18} className="text-white" />}
-              progressFraction={0.5}
-              isDark={isDark}
-              onClick={() => {
-                const item = getPachakkhan('AYAMBIL');
-                if (item) onSelectPachakkhan(item, 'No Vigai', 'Ayambil');
-              }}
-            />
-            <IOSTimingCard
-              title="Upvas"
-              timeFormatted="Fast"
-              icon={<Moon size={18} className="text-white" />}
-              progressFraction={0.8}
-              isDark={isDark}
-              onClick={() => {
-                const item = getPachakkhan('UPVAS');
-                if (item) onSelectPachakkhan(item, 'Complete Fast', 'Upvas');
-              }}
-            />
-            <IOSTimingCard
-              title="Tivihar"
-              timeFormatted="Water Only"
-              icon={<Droplet size={18} className="text-white" />}
-              progressFraction={0.5}
-              isDark={isDark}
-              onClick={() => {
-                const item = getPachakkhan('CHAUVIHAR');
-                if (item) onSelectPachakkhan(item, 'Water Only', 'Tivihar');
-              }}
-            />
+            <div className="grid grid-cols-3 gap-2.5">
+              <IOSTimingCard
+                title="Ayambil"
+                timeFormatted="No Vigai"
+                icon={<Sparkles size={18} className="text-white" />}
+                progressFraction={0.5}
+                isDark={isDark}
+                onClick={() => {
+                  handleCardClick(() => {
+                    const item = getPachakkhan('AYAMBIL');
+                    if (item) onSelectPachakkhan(item, 'No Vigai', 'Ayambil');
+                  });
+                }}
+              />
+              <IOSTimingCard
+                title="Upvas"
+                timeFormatted="Fast"
+                icon={<Moon size={18} className="text-white" />}
+                progressFraction={0.8}
+                isDark={isDark}
+                onClick={() => {
+                  handleCardClick(() => {
+                    const item = getPachakkhan('UPVAS');
+                    if (item) onSelectPachakkhan(item, 'Complete Fast', 'Upvas');
+                  });
+                }}
+              />
+              <IOSTimingCard
+                title="Tivihar"
+                timeFormatted="Water Only"
+                icon={<Droplet size={18} className="text-white" />}
+                progressFraction={0.5}
+                isDark={isDark}
+                onClick={() => {
+                  handleCardClick(() => {
+                    const item = getPachakkhan('CHAUVIHAR');
+                    if (item) onSelectPachakkhan(item, 'Water Only', 'Tivihar');
+                  });
+                }}
+              />
+            </div>
           </div>
         </div>
       </div>
 
       {/* Pagination Dots Indicator: ● ○ */}
-      <div className="flex items-center justify-center gap-2 py-2">
+      <div className="flex items-center justify-center gap-2 py-1.5">
         <button
-          onClick={() => scrollToPage(0)}
+          onClick={() => setCurrentPage(0)}
           className={`h-1.5 rounded-full transition-all cursor-pointer ${
             currentPage === 0 ? 'w-6 bg-white' : 'w-1.5 bg-white/30'
           }`}
           aria-label="Primary Timings"
         />
         <button
-          onClick={() => scrollToPage(1)}
+          onClick={() => setCurrentPage(1)}
           className={`h-1.5 rounded-full transition-all cursor-pointer ${
             currentPage === 1 ? 'w-6 bg-white' : 'w-1.5 bg-white/30'
           }`}
-          aria-label="Extended Vows"
+          aria-label="Penance Vows"
         />
       </div>
 

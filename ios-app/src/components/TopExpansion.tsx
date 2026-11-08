@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { X, Play, Pause, Clock, AlertCircle } from 'lucide-react';
 import { PachakkhanItem, TithiInfo, SolarTimes, LanguageCode } from '../types';
 import { AudioEngine } from '../engine/AudioEngine';
@@ -28,6 +28,7 @@ export const TopExpansion: React.FC<TopExpansionProps> = ({
 }) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const audioEngine = AudioEngine.getInstance();
+  const touchStartY = useRef<number | null>(null);
 
   useEffect(() => {
     const unsub = audioEngine.subscribe(() => {
@@ -37,6 +38,20 @@ export const TopExpansion: React.FC<TopExpansionProps> = ({
   }, []);
 
   if (!payload) return null;
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartY.current = e.touches[0].clientY;
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartY.current !== null) {
+      const diffY = e.changedTouches[0].clientY - touchStartY.current;
+      if (diffY < -30) {
+        onClose();
+      }
+    }
+    touchStartY.current = null;
+  };
 
   const handleAudioToggle = (item: PachakkhanItem) => {
     if (isPlaying) {
@@ -63,6 +78,8 @@ export const TopExpansion: React.FC<TopExpansionProps> = ({
       {/* Expansion cascading directly out from the physical notch / island at top edge */}
       <div className="fixed top-0 inset-x-0 z-50 flex justify-center pointer-events-none">
         <div
+          onTouchStart={handleTouchStart}
+          onTouchEnd={handleTouchEnd}
           className="pointer-events-auto w-full max-w-md bg-black text-white rounded-b-[36px] border-b border-x border-white/20 shadow-[0_25px_60px_rgba(0,0,0,0.95)] pt-[max(12px,calc(env(safe-area-inset-top)+6px))] pb-5 px-5 animate-in slide-in-from-top-4 duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]"
         >
           {/* Top Notch Gripper bar (swipe up to dismiss) */}
