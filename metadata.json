@@ -1,0 +1,6 @@
+{
+  "name": "Prahara",
+  "description": "Prahara - Mobile-first Jain Daily Pachakkhan & Tithi Tracker with astronomical solar calculations, Parva tithi observances, and trilingual audio recitations.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
