@@ -8,7 +8,7 @@ import { SettingsScreen } from './screens/SettingsScreen';
 import { TutorialScreen } from './screens/TutorialScreen';
 import { PachakkhanModal } from './components/PachakkhanModal';
 import { IOSFloatingBottomBar } from './components/IOSFloatingBottomBar';
-import { DynamicIsland, DynamicIslandPayload } from './components/DynamicIsland';
+import { TopExpansion, TopExpansionPayload } from './components/TopExpansion';
 
 export const App: React.FC = () => {
   const [currentTab, setCurrentTab] = useState<ScreenTab>('home');
@@ -35,7 +35,7 @@ export const App: React.FC = () => {
   const [showTutorial, setShowTutorial] = useState<boolean>(false);
 
   const [selectedPachakkhan, setSelectedPachakkhan] = useState<PachakkhanItem | null>(null);
-  const [islandPayload, setIslandPayload] = useState<DynamicIslandPayload | null>(null);
+  const [topPayload, setTopPayload] = useState<TopExpansionPayload | null>(null);
   const [showInstallBanner, setShowInstallBanner] = useState(false);
 
   // Detect iOS standalone mode
@@ -80,29 +80,25 @@ export const App: React.FC = () => {
           : 'bg-[#F7F8FA] text-black'
       }`}
     >
-      {/* Dynamic Island / Notch Expansion at Top */}
-      <DynamicIsland
-        payload={islandPayload}
-        onClose={() => setIslandPayload(null)}
+      {/* Top Expansion attached flush to physical Notch / Dynamic Island */}
+      <TopExpansion
+        payload={topPayload}
+        onClose={() => setTopPayload(null)}
         onOpenFullModal={(item) => {
           setSelectedPachakkhan(item);
         }}
         preferredLanguage={preferredLanguage}
       />
 
-      {/* iOS Notched Top Safe Area Spacer */}
-      <div className="h-[max(48px,calc(env(safe-area-inset-top)+14px))] shrink-0" />
+      {/* iOS Top Safe Area Spacer */}
+      <div className="h-[max(12px,env(safe-area-inset-top))] shrink-0" />
 
       {/* Main Container */}
       <main className="flex-1 w-full max-w-md mx-auto px-4 pt-1">
         {/* iOS Add to Home Screen Banner */}
         {showInstallBanner && (
           <div
-            className={`mb-3 p-3 rounded-[20px] border text-xs flex items-center justify-between shadow-lg animate-in fade-in ${
-              isDark
-                ? 'bg-[#121622] border-white/20 text-white'
-                : 'bg-white border-black/20 text-black'
-            }`}
+            className="mb-3 p-3 rounded-[20px] border border-white/20 bg-[#121622] text-white text-xs flex items-center justify-between shadow-lg animate-in fade-in"
           >
             <div className="flex items-center gap-2 pr-2">
               <Share size={15} className="text-white shrink-0" />
@@ -126,7 +122,7 @@ export const App: React.FC = () => {
             onUpdateLocation={handleUpdateLocation}
             onSelectPachakkhan={(item, timeFormatted, title) => {
               // Smoothly expand from Notch / Dynamic Island!
-              setIslandPayload({
+              setTopPayload({
                 mode: 'timing',
                 timingItem: item,
                 timingTitle: title,
@@ -143,7 +139,7 @@ export const App: React.FC = () => {
             isDark={isDark}
             onSelectDateCell={(date, tithi, solar) => {
               // Smoothly expand from Notch / Dynamic Island!
-              setIslandPayload({
+              setTopPayload({
                 mode: 'calendar',
                 date: date,
                 tithiInfo: tithi,
@@ -170,7 +166,7 @@ export const App: React.FC = () => {
       <IOSFloatingBottomBar
         currentTab={currentTab}
         onTabChange={(tab) => {
-          setIslandPayload(null);
+          setTopPayload(null);
           setCurrentTab(tab);
         }}
         isDark={isDark}

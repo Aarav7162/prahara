@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   MapPin,
   RefreshCw,
@@ -39,6 +39,9 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
   const [showObservanceDialog, setShowObservanceDialog] = useState(false);
   const [currentPage, setCurrentPage] = useState<0 | 1>(0);
   const [now, setNow] = useState(new Date());
+
+  const carouselRef = useRef<HTMLDivElement>(null);
+  const touchStartX = useRef<number | null>(null);
 
   // Update clock every second
   useEffect(() => {
@@ -143,8 +146,42 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
     return Math.min(1, Math.max(0, elapsed / total));
   };
 
+  const handleScroll = () => {
+    if (!carouselRef.current) return;
+    const { scrollLeft, clientWidth } = carouselRef.current;
+    if (clientWidth === 0) return;
+    const pageIndex = Math.round(scrollLeft / clientWidth);
+    if (pageIndex === 0 || pageIndex === 1) {
+      setCurrentPage(pageIndex);
+    }
+  };
+
+  const scrollToPage = (pageIndex: 0 | 1) => {
+    if (!carouselRef.current) return;
+    carouselRef.current.scrollTo({
+      left: pageIndex * carouselRef.current.clientWidth,
+      behavior: 'smooth'
+    });
+    setCurrentPage(pageIndex);
+  };
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartX.current === null) return;
+    const diffX = touchStartX.current - e.changedTouches[0].clientX;
+    touchStartX.current = null;
+    if (diffX > 45 && currentPage === 0) {
+      scrollToPage(1);
+    } else if (diffX < -45 && currentPage === 1) {
+      scrollToPage(0);
+    }
+  };
+
   return (
-    <div className="w-full flex flex-col space-y-3 pb-24 animate-in fade-in">
+    <div className="w-full flex flex-col space-y-3 pb-24 animate-in fade-in select-none">
       {/* Sleek Minimalist Location Pill */}
       <div className="flex items-center justify-between px-1 pt-1">
         <button
@@ -198,15 +235,28 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         isDark={isDark}
       />
 
-      {/* Section Title */}
+      {/* Section Title with Swipe Hint */}
       <div className="flex items-center justify-between px-1 pt-1">
-        <h3 className="text-[14.5px] font-bold text-slate-300">Pachakkhan Timings</h3>
+        <div className="flex items-center gap-2">
+          <h3 className="text-[14.5px] font-bold text-slate-300">Pachakkhan Timings</h3>
+          <span className="text-[10px] uppercase tracking-wider text-slate-500 font-bold bg-white/5 px-2 py-0.5 rounded-md">
+            Swipe ‹ ›
+          </span>
+        </div>
         <span className="text-[11px] font-semibold text-slate-400">IST (UTC+5:30)</span>
       </div>
 
-      {/* 3-Column Timing Grids */}
-      {currentPage === 0 ? (
-        <div className="space-y-2.5">
+      {/* Touch-Swipeable 3-Column Timing Carousel */}
+      <div
+        ref={carouselRef}
+        onScroll={handleScroll}
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+        className="w-full flex overflow-x-auto snap-x snap-mandatory scroll-smooth no-scrollbar touch-pan-x"
+        style={{ WebkitOverflowScrolling: 'touch' }}
+      >
+        {/* Page 1: 6 Primary Timings */}
+        <div className="w-full min-w-full shrink-0 snap-center pr-1 space-y-2.5">
           {/* Row 1: Surya Uday | Navkarsi | Porsi */}
           <div className="grid grid-cols-3 gap-2.5">
             <IOSTimingCard
@@ -282,9 +332,9 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
             />
           </div>
         </div>
-      ) : (
-        /* Page 2: Extended Penance Vows */
-        <div className="space-y-2.5">
+
+        {/* Page 2: Extended Penance Vows (Avaddh, Ekashna, Biyashna, Ayambil, Upvas, Tivihar) */}
+        <div className="w-full min-w-full shrink-0 snap-center pl-1 space-y-2.5">
           <div className="grid grid-cols-3 gap-2.5">
             <IOSTimingCard
               title="Avaddh"
@@ -357,20 +407,20 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
             />
           </div>
         </div>
-      )}
+      </div>
 
       {/* Pagination Dots Indicator: ● ○ */}
       <div className="flex items-center justify-center gap-2 py-2">
         <button
-          onClick={() => setCurrentPage(0)}
-          className={`h-1.5 rounded-full transition-all ${
+          onClick={() => scrollToPage(0)}
+          className={`h-1.5 rounded-full transition-all cursor-pointer ${
             currentPage === 0 ? 'w-6 bg-white' : 'w-1.5 bg-white/30'
           }`}
           aria-label="Primary Timings"
         />
         <button
-          onClick={() => setCurrentPage(1)}
-          className={`h-1.5 rounded-full transition-all ${
+          onClick={() => scrollToPage(1)}
+          className={`h-1.5 rounded-full transition-all cursor-pointer ${
             currentPage === 1 ? 'w-6 bg-white' : 'w-1.5 bg-white/30'
           }`}
           aria-label="Extended Vows"
