@@ -1,0 +1,31 @@
+{
+  "name": "Prahara - Jain Panchang Tracker",
+  "short_name": "Prahara",
+  "description": "Mobile-first Jain Daily Pachakkhan & Tithi Tracker with astronomical solar calculations, Parva observances, and trilingual audio recitations.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0B0D12",
+  "theme_color": "#0B0D12",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    }
+  ]
+}
+
