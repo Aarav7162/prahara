@@ -1,0 +1,10 @@
+{
+  "appId": "com.prahara.panchang",
+  "appName": "Prahara",
+  "webDir": "dist",
+  "ios": {
+    "contentInset": "always",
+    "preferredContentMode": "mobile"
+  }
+}
+

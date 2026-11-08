@@ -1,0 +1,14 @@
+{
+  "name": "prahara-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Prahara - Mobile-first Jain Daily Pachakkhan & Tithi Tracker for Android and iOS",
+  "scripts": {
+    "dev": "npm --prefix ios-app run dev",
+    "build": "npm --prefix ios-app run build && npm --prefix ios-app run cap:sync",
+    "preview": "npm --prefix ios-app run preview",
+    "cap:sync": "cd ios-app && npx cap sync ios",
+    "ios:open": "cd ios-app && npx cap open ios"
+  }
+}
+

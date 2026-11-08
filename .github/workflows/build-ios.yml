@@ -1,0 +1,53 @@
+name: Build iOS Xcode App
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'ios-app/**'
+      - '.github/workflows/build-ios.yml'
+
+jobs:
+  build-ios:
+    runs-on: macos-14
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install dependencies
+        working-directory: ./ios-app
+        run: |
+          npm ci
+          npm run build
+          npx cap sync ios
+
+      - name: Build Xcode Project
+        working-directory: ./ios-app/ios/App
+        run: |
+          xcodebuild -project App.xcodeproj \
+                     -scheme App \
+                     -configuration Release \
+                     -sdk iphoneos \
+                     CODE_SIGN_IDENTITY="" \
+                     CODE_SIGNING_REQUIRED=NO \
+                     CODE_SIGNING_ALLOWED=NO \
+                     build
+
+      - name: Package Payload as unsigned IPA
+        working-directory: ./ios-app/ios/App
+        run: |
+          mkdir -p build/Payload
+          cp -r build/Release-iphoneos/App.app build/Payload/
+          cd build && zip -r Prahara-unsigned.ipa Payload
+
+      - name: Upload IPA Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Prahara-iOS-App
+          path: ios-app/ios/App/build/Prahara-unsigned.ipa
+
